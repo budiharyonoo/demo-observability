@@ -1,0 +1,7 @@
+.serena/
+frontend/node_modules/
+frontend/dist/
+artifacts/
+graphify-out/
+.DS_Store
+__pycache__/

@@ -1,0 +1,82 @@
+name: observability-demo
+include:
+  - ./signoz/pours/deployment/compose.yaml
+x-app: &app
+  networks: [demo-signoz-network]
+  environment:
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    OTEL_EXPORTER_OTLP_INSECURE: "true"
+    OTEL_SDK_DISABLED: ${OTEL_SDK_DISABLED:-false}
+  restart: unless-stopped
+  init: true
+  stop_grace_period: 15s
+  healthcheck:
+    test: [CMD, wget, -q, --spider, http://127.0.0.1:8080/healthz]
+    interval: 5s
+    timeout: 3s
+    retries: 20
+services:
+  frontend:
+    build: ./frontend
+    networks: [demo-signoz-network]
+    ports: ["127.0.0.1:18000:80"]
+    restart: unless-stopped
+    depends_on: [cart-service, otel-collector]
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.161.0
+    networks: [demo-signoz-network]
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes: ["./otel-collector/config.yaml:/etc/otelcol/config.yaml:ro"]
+    restart: unless-stopped
+  mysql:
+    restart: unless-stopped
+    networks: [demo-signoz-network]
+    image: mysql:8.4.8
+    environment:
+      MYSQL_DATABASE: checkout
+      MYSQL_USER: demo
+      MYSQL_PASSWORD: demo-local
+      MYSQL_ROOT_PASSWORD: root-local-demo
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: [CMD-SHELL, 'mysql -udemo -pdemo-local checkout -e "SELECT 1 FROM products LIMIT 1"']
+      interval: 5s
+      timeout: 3s
+      retries: 40
+  redis:
+    restart: unless-stopped
+    networks: [demo-signoz-network]
+    image: redis:8.2.3-alpine
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  product-service:
+    <<: *app
+    build:
+      context: .
+      args: {SERVICE: product-service}
+    depends_on:
+      mysql: {condition: service_healthy}
+  order-service:
+    <<: *app
+    build:
+      context: .
+      args: {SERVICE: order-service}
+    depends_on:
+      mysql: {condition: service_healthy}
+  cart-service:
+    <<: *app
+    build:
+      context: .
+      args: {SERVICE: cart-service}
+    ports: ["127.0.0.1:18080:8080"]
+    depends_on:
+      redis: {condition: service_healthy}
+      product-service: {condition: service_healthy}
+      order-service: {condition: service_healthy}
+volumes:
+  mysql-data:

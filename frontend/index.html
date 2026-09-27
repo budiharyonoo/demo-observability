@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Checkout observability demo</title>
+  <style>
+    body {font: 18px/1.5 system-ui, sans-serif; margin: 3rem auto; padding: 0 1rem; max-width: 42rem; color: #182433; background: #f6f8fa}
+    main {padding: 2rem; background: white; border: 1px solid #ccd5df; border-radius: .75rem}
+    h1 {font-size: 1.6rem; margin-top: 0} label {display:block; margin-top:1rem}
+    input, select, button {font: inherit; padding: .5rem; border: 1px solid #63758a; border-radius: .3rem}
+    input, select {box-sizing: border-box; width:100%} button {margin-top:1rem; cursor:pointer}
+    #checkout {background:#184f99; color:white} button:disabled {opacity:.6; cursor:wait}
+    :focus-visible {outline:3px solid #a34900; outline-offset:3px}
+    code {overflow-wrap:anywhere} .note {color:#455568; font-size:.9rem}
+  </style>
+  <script defer src="/app.js"></script>
+</head>
+<body>
+<main>
+  <h1>Checkout observability demo</h1>
+  <p>Demo Product · Rp100,000 · Stock 10</p>
+  <p class="note">User 1001. Each successful Checkout creates a separate Order.</p>
+  <form id="form">
+    <label for="product">Product ID</label><input id="product" type="number" min="1" step="1" value="10" required>
+    <label for="quantity">Quantity</label><input id="quantity" type="number" min="1" max="1000000" step="1" value="2" required>
+    <label for="scenario">Scenario</label>
+    <select id="scenario"><option value="normal">Normal Checkout</option>
+      <option value="slow-product">Slow Product Service</option>
+      <option value="slow-db">Slow database query</option>
+      <option value="redis-slow">Slow Redis operation</option>
+      <option value="product-error">Product Service error</option>
+      <option value="out-of-stock">Insufficient Stock</option>
+      <option value="order-error">Order creation error</option></select>
+    <button id="checkout" type="submit">Checkout</button>
+  </form>
+  <div aria-live="polite" aria-atomic="true">
+    <p id="result">Ready for Checkout.</p>
+    <p>Trace ID: <code id="trace-id">—</code></p>
+    <p class="note" id="request-id"></p>
+  </div>
+  <button id="copy" type="button" disabled>Copy Trace ID</button>
+  <p><a href="http://localhost:18081" target="_blank" rel="noopener">Open SigNoz</a></p>
+</main>
+</body>
+</html>

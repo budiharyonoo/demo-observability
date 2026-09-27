@@ -1,0 +1,20 @@
+CREATE TABLE products (
+ id BIGINT PRIMARY KEY,
+ name VARCHAR(100) NOT NULL,
+ price BIGINT NOT NULL CHECK (price > 0),
+ stock BIGINT NOT NULL CHECK (stock >= 0),
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+CREATE TABLE orders (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ user_id BIGINT NOT NULL CHECK (user_id > 0),
+ product_id BIGINT NOT NULL,
+ quantity BIGINT NOT NULL CHECK (quantity > 0),
+ price BIGINT NOT NULL CHECK (price > 0),
+ total_amount BIGINT NOT NULL CHECK (total_amount > 0),
+ status VARCHAR(20) NOT NULL,
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY (product_id) REFERENCES products(id)
+);
+INSERT INTO products (id,name,price,stock) VALUES (10,'Demo Product',100000,10);

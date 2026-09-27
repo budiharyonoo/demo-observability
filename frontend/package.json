@@ -1,0 +1,24 @@
+{
+  "name": "checkout-frontend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild app.js --bundle --target=es2016 --outfile=dist/app.js",
+    "test": "node --test browser.test.mjs"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "1.9.1",
+    "@opentelemetry/context-zone": "2.11.0",
+    "@opentelemetry/core": "2.11.0",
+    "@opentelemetry/exporter-trace-otlp-http": "0.222.0",
+    "@opentelemetry/instrumentation": "0.222.0",
+    "@opentelemetry/instrumentation-fetch": "0.222.0",
+    "@opentelemetry/instrumentation-user-interaction": "0.66.0",
+    "@opentelemetry/resources": "2.11.0",
+    "@opentelemetry/sdk-trace-web": "2.11.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "playwright": "1.63.0"
+  }
+}

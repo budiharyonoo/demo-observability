@@ -1,0 +1,53 @@
+apiVersion: v1alpha1
+kind: Installation
+metadata:
+  name: demo-signoz
+spec:
+  deployment:
+    flavor: compose
+    mode: docker
+  signoz:
+    spec:
+      image: signoz/signoz:v0.143.0
+  ingester:
+    spec:
+      image: signoz/signoz-otel-collector:v0.144.12
+  patches:
+    - target: deployment/compose.yaml
+      operations:
+        - op: replace
+          path: /services/demo-signoz-metastore-postgres-0/image
+          value: postgres:16.15
+        - op: add
+          path: /services/demo-signoz-telemetrystore-migrator/depends_on
+          value:
+            demo-signoz-telemetrystore-clickhouse-0-0:
+              condition: service_healthy
+        - op: add
+          path: /services/ingester/depends_on
+          value:
+            demo-signoz-telemetrystore-migrator:
+              condition: service_completed_successfully
+        - op: add
+          path: /services/demo-signoz-signoz-0/depends_on
+          value:
+            demo-signoz-metastore-postgres-0:
+              condition: service_healthy
+            demo-signoz-telemetrystore-migrator:
+              condition: service_completed_successfully
+        - op: replace
+          path: /services/demo-signoz-signoz-0/ports
+          value: ["127.0.0.1:18081:8080"]
+        - op: remove
+          path: /services/ingester/ports
+        - op: replace
+          path: /services/demo-signoz-telemetrystore-migrator/image
+          value: signoz/signoz-otel-collector:v0.144.12
+        - op: add
+          path: /services/demo-signoz-signoz-0/environment/-
+          value: TELEMETRY_ENABLED=false
+        - op: replace
+          path: /services/ingester/command
+          value:
+            - -c
+            - /signoz-otel-collector migrate sync check && /signoz-otel-collector --config=/etc/otel-collector-config.yaml
